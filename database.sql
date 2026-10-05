@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name VARCHAR(150) NOT NULL,
-    role VARCHAR(100) NOT NULL,
+    role VARCHAR(100) NOT NULL DEFAULT 'member',
     office VARCHAR(150),
     permissions TEXT[] NOT NULL DEFAULT '{}',
     active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -21,9 +21,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     revoked_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_sessions_user
-ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 
 CREATE TABLE IF NOT EXISTS portal_documents (
     doc_key VARCHAR(100) PRIMARY KEY,
@@ -42,9 +40,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     details JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_audit_created
-ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS medical_leaves (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,13 +53,9 @@ CREATE TABLE IF NOT EXISTS medical_leaves (
     status VARCHAR(30) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT leave_dates_valid
-    CHECK (to_date >= from_date)
+    CONSTRAINT leave_dates_valid CHECK (to_date >= from_date)
 );
-
-CREATE INDEX IF NOT EXISTS idx_medical_leave_user
-ON medical_leaves(user_id);
+CREATE INDEX IF NOT EXISTS idx_medical_leave_user ON medical_leaves(user_id);
 
 CREATE TABLE IF NOT EXISTS leave_routes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -76,9 +68,7 @@ CREATE TABLE IF NOT EXISTS leave_routes (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(leave_id, recipient_id, sequence_no)
 );
-
-CREATE INDEX IF NOT EXISTS idx_leave_routes_recipient
-ON leave_routes(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_leave_routes_recipient ON leave_routes(recipient_id);
 
 CREATE TABLE IF NOT EXISTS exam_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -91,9 +81,7 @@ CREATE TABLE IF NOT EXISTS exam_requests (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_exam_requests_user
-ON exam_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_exam_requests_user ON exam_requests(user_id);
 
 CREATE TABLE IF NOT EXISTS exam_routes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,9 +94,7 @@ CREATE TABLE IF NOT EXISTS exam_routes (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(exam_id, recipient_id, sequence_no)
 );
-
-CREATE INDEX IF NOT EXISTS idx_exam_routes_recipient
-ON exam_routes(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_exam_routes_recipient ON exam_routes(recipient_id);
 
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -121,9 +107,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_notifications_user
-ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS cases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -148,3 +132,10 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Useful defaults / constraints
+CREATE INDEX IF NOT EXISTS idx_leaves_status ON medical_leaves(status);
+CREATE INDEX IF NOT EXISTS idx_exams_status ON exam_requests(status);
+CREATE INDEX IF NOT EXISTS idx_cases_created ON cases(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_penalties_created ON penalties(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_finance_created ON finance_transactions(created_at DESC);
